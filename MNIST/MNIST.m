@@ -5,6 +5,20 @@ runCount=100;
 ensSize=100;
 %% Set Base classifiers 1=LDA-RS, 2=LDA-RP, 3=SVM-RS, 4=SVM-RP, 5=RF
 baseClassifier=5;
+for baseClassifier=1:5
+prefix='mnist';
+if baseClassifier==1
+    suffix='lda_rs';
+elseif baseClassifier==2
+    suffix='lda_rp';
+elseif baseClassifier==3
+    suffix='svm_rs';
+elseif baseClassifier==4
+    suffix='svm_rp';
+else
+    suffix='rf';
+end
+filespec=sprintf('%s_%s',prefix,suffix);
 
 RSSens=zeros(runCount,kCount,ensSize);
 RSSens2=zeros(runCount,kCount,ensSize);
@@ -232,7 +246,7 @@ close gcf;
       
 %% Plot the Empirical Accuracy vs PE-Model                
         
-sTitle=sprintf('Ensemble Accuracy vs Ensemble Size for MNIST');
+sTitle=sprintf('Ensemble Accuracy vs Ensemble Size for %s',upper(prefix));
 [fig myAxes]=createAxes([2 2],'title',sTitle,'hSize',7.5,'vSize',8.5,'leftOffset',0,'legendHeight',0.8,'vMargin',1.25);
 myPlots=gobjects(1,6);
 plotNo=0;
@@ -287,9 +301,9 @@ plotNo=0;
     legendCell={'Empirical Majority Vote','Polya Model (Vote Correlation)','Polya Model (Jaccard Similarity)','Polya Model (Yule Diversity)','Binomial Model (Uncorrelated)','Polya Model (Sneath Diversity)'};
     legend(myPlots,legendCell,'Location',[0.4 0.045 0.3 0.04]);
     drawnow;
-    fileName=sprintf('polyaModel_mnist.fig');
+    fileName=sprintf('polyaModel_%s.fig',filespec);
     savefig(fileName);
-    fileName=sprintf('polyaModel_mnist.eps');
+    fileName=sprintf('polyaModel_%s.eps',filespec);
     saveas(gcf,fileName,'epsc');
 
     
@@ -311,7 +325,7 @@ rssRec;
 
 %% Plot the mean and 95-5% bootstrap empirical accuracy vs PE-Model
 
-sTitle=sprintf('Ensemble Accuracy vs Ensemble Size for MNIST');
+sTitle=sprintf('Ensemble Accuracy vs Ensemble Size for %s',upper(prefix));
 [fig myAxes]=createAxes([2 2],'title',sTitle,'hSize',7.5,'vSize',8.5,'leftOffset',0,'legendHeight',0.8,'vMargin',1.25);
 myPlots=gobjects(1,4);
 plotNo=0;
@@ -352,13 +366,14 @@ plotNo=0;
     legendCell={'Empirical Majority Vote','Upper 95% Accuracy','Lower 5% Accuracy','Polya Model (Sneath Diversity)'};
     legend(myPlots,legendCell,'Location',[0.4 0.045 0.3 0.04]);
     drawnow;
-    fileName=sprintf('ci_mnist.fig');
+    fileName=sprintf('ci_%s.fig',filespec);
     savefig(fileName);
-    fileName=sprintf('ci_mnist.eps');
+    fileName=sprintf('ci_%s.eps',filespec);
     saveas(gcf,fileName,'epsc');
 
     
     
-  save MNIST.mat  
+  save(filespec)
     
 
+end
