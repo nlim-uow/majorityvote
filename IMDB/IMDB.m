@@ -5,7 +5,20 @@ runCount=100;
 ensSize=100;
 %% Set Base classifiers 1=LDA-RS, 2=LDA-RP, 3=SVM-RS, 4=SVM-RP, 5=RF
 baseClassifier=5;
-
+for baseClassifier=[1 3 5]
+prefix='imdb';
+if baseClassifier==1
+    suffix='lda_rs';
+elseif baseClassifier==2
+    suffix='lda_rp';
+elseif baseClassifier==3
+    suffix='svm_rs';
+elseif baseClassifier==4
+    suffix='svm_rp';
+else
+    suffix='rf';
+end
+filespec=sprintf('%s_%s',prefix,suffix);
 RSSens=zeros(runCount,kCount,ensSize);
 RSSens2=zeros(runCount,kCount,ensSize);
 accSub=zeros(runCount,kCount,ensSize);
@@ -51,13 +64,13 @@ fileName='labeledBow.test';
         lines = dataread('file', fileName, '%s', 'delimiter', '\n', 'bufsize', 655350);
         obs=length(lines)
         dataStore=sparse(obs,100000);
-        yTest=zeros(obs,1);
+        yStore=zeros(obs,1);
         for i=1:obs
             tokens=split(lines(i),' ');
             if(str2double(tokens(1))>5) 
-                yTest(i)=1;
+                yStore(i)=1;
             else
-                yTest(i)=-1;
+                yStore(i)=-1;
             end
             line=join(tokens(2:end));
             rec=sscanf(line,'%d:%d');
@@ -69,11 +82,11 @@ end
 
 %% Remove zero-variance features
 d=size(data,2);
-indices=1:d;
-nzVarIndex=indices(var(data,1)>0);
-dataStore=dataStore(:,nzVarIndex);
-data=data(:,nzVarIndex);
-d=size(data,2);
+%indices=1:d;
+%nzVarIndex=indices(var(data,1)>0);
+%dataStore=dataStore(:,nzVarIndex);
+%data=data(:,nzVarIndex);
+%d=size(data,2);
 
 
 baseW=zeros(1,d);
@@ -149,10 +162,10 @@ elseif baseClassifier==4
     ySub=predict(yTest,sparse(tData*rProj'),svModel,'-q');
 else 
     sampleIndices=randsample(nTrain,ceil(nTrain/3));
-    bootStrapSample=data(sampleIndices,subspace);
+    bootStrapSample=full(data(sampleIndices,subspace));
     cTree=fitctree(bootStrapSample,y(sampleIndices));
-    yValSub=cTree.predict(vData(:,subspace));
-    ySub=cTree.predict(tData(:,subspace));
+    yValSub=cTree.predict(full(vData(:,subspace)));
+    ySub=cTree.predict(full(tData(:,subspace)));
 end
 
 
@@ -231,7 +244,7 @@ close gcf;
       
 %% Plot the Empirical Accuracy vs PE-Model                
         
-sTitle=sprintf('Ensemble Accuracy vs Ensemble Size for GTZAN');
+sTitle=sprintf('Ensemble Accuracy vs Ensemble Size for %s',upper(prefix));
 [fig myAxes]=createAxes([2 2],'title',sTitle,'hSize',7.5,'vSize',8.5,'leftOffset',0,'legendHeight',0.8,'vMargin',1.25);
 myPlots=gobjects(1,6);
 plotNo=0;
@@ -286,9 +299,9 @@ plotNo=0;
     legendCell={'Empirical Majority Vote','Polya Model (Vote Correlation)','Polya Model (Jaccard Similarity)','Polya Model (Yule Diversity)','Binomial Model (Uncorrelated)','Polya Model (Sneath Diversity)'};
     legend(myPlots,legendCell,'Location',[0.4 0.045 0.3 0.04]);
     drawnow;
-    fileName=sprintf('polyaModel_gtzan.fig');
+    fileName=sprintf('polyaModel_%s.fig',filespec);
     savefig(fileName);
-    fileName=sprintf('polyaModel_gtzan.eps');
+    fileName=sprintf('polyaModel_%s.eps',filespec);
     saveas(gcf,fileName,'epsc');
 
     
@@ -310,7 +323,7 @@ rssRec;
 
 %% Plot the mean and 95-5% bootstrap empirical accuracy vs PE-Model
 
-sTitle=sprintf('Ensemble Accuracy vs Ensemble Size for GTZAN');
+sTitle=sprintf('Ensemble Accuracy vs Ensemble Size for %s',upper(prefix));
 [fig myAxes]=createAxes([2 2],'title',sTitle,'hSize',7.5,'vSize',8.5,'leftOffset',0,'legendHeight',0.8,'vMargin',1.25);
 myPlots=gobjects(1,4);
 plotNo=0;
@@ -351,13 +364,13 @@ plotNo=0;
     legendCell={'Empirical Majority Vote','Upper 95% Accuracy','Lower 5% Accuracy','Polya Model (Sneath Diversity)'};
     legend(myPlots,legendCell,'Location',[0.4 0.045 0.3 0.04]);
     drawnow;
-    fileName=sprintf('ci_gtzan.fig');
+    fileName=sprintf('ci_%s.fig',filespec);
     savefig(fileName);
-    fileName=sprintf('ci_gtzan.eps');
+    fileName=sprintf('ci_%s.eps',filespec);
     saveas(gcf,fileName,'epsc');
 
     
     
-  save gtzan.mat  
+  save(filespec)
     
 
